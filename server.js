@@ -31,7 +31,6 @@ app.get('/api/league/:slug', async (req, res) => {
         const standingsRes = await axios.get(`https://api.sofascore.com/api/v1/unique-tournament/${leagueId}/season/${seasonId}/standings/total`, { headers: SOFA_HEADERS });
         res.json({ leagueName: tournament.name, standings: standingsRes.data.standings });
     } catch (error) {
-        console.error("Liqa xətası:", error.message);
         res.status(500).json({ error: "Xəta baş verdi" });
     }
 });
@@ -41,13 +40,16 @@ app.get('/api/team/:id/players', async (req, res) => {
         const response = await axios.get(`https://api.sofascore.com/api/v1/team/${req.params.id}/players`, { headers: SOFA_HEADERS });
         res.json(response.data);
     } catch (error) {
-        console.error("Heyət xətası:", error.message);
         res.status(500).json({ error: "Heyət tapılmadı" });
     }
 });
 
-// DOĞRU PORT AYARI: Sadece bir defe app.listen olmalıdır
+app.listen(3000, () => console.log(`Server: http://localhost:3000`));
+// Əvvəlki kodun davamı...
+
+// Portu Render-in verdiyi dəyişəndən götürürük
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
     console.log(`Server ${PORT} portunda aktivdir`);
 });
