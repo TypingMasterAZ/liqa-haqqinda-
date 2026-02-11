@@ -44,12 +44,8 @@ app.get('/api/team/:id/players', async (req, res) => {
     }
 });
 
-app.listen(3000, () => console.log(`Server: http://localhost:3000`));
-// Əvvəlki kodun davamı...
-
-// Portu Render-in verdiyi dəyişəndən götürürük
+// DOĞRU PORT AYARI: Yalnız bu bir dənə listen olmalıdır
 const PORT = process.env.PORT || 3000;
-
 app.listen(PORT, () => {
     console.log(`Server ${PORT} portunda aktivdir`);
 });
