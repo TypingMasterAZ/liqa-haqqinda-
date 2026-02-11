@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProScout - Mobil Uyğun Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        body { 
+            background-color: #080a0f; 
+            color: #f8fafc; 
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Xüsusi Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+
+        /* Masaüstü üçün sabit panel, Mobil üçün normal axış */
+        @media (min-width: 1024px) {
+            .sticky-side {
+                position: sticky;
+                top: 2rem;
+                height: calc(100vh - 4rem);
+            }
+        }
+
+        .player-card {
+            background: #11141b;
+            border: 1px solid #1e293b;
+            transition: all 0.2s ease;
+        }
+
+        .player-card:active { transform: scale(0.98); } /* Mobil toxunuş effekti */
+
+        /* Cədvəl sətirlərinin mobil görüntüsü */
+        .team-row td { padding: 12px 8px; }
+    </style>
+</head>
+<body class="p-3 md:p-6 lg:p-8">
+
+    <div class="max-w-[1400px] mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-6 p-5 bg-[#11141b] rounded-2xl border border-slate-800 shadow-xl gap-4">
+            <h1 class="text-xl font-extrabold text-blue-500 italic tracking-tighter uppercase">PRO<span class="text-white">SCOUT</span></h1>
+            <select id="leagueSelect" onchange="loadLeague()" class="bg-[#1a1f2b] border border-slate-700 p-3 rounded-xl outline-none w-full md:w-72 font-semibold text-sm">
+                <option value="eng">🏴󠁧󠁢󠁥󠁮󠁧󠁿 İngiltərə Premyer Liqası</option>
+                <option value="esp">🇪🇸 İspaniya La Liga</option>
+                <option value="tur">🇹🇷 Türkiyə Super Liqası</option>
+                <option value="ger">🇩🇪 Almaniya Bundesliga</option>
+                <option value="ucl">🇪🇺 Champions League</option>
+            </select>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <div class="lg:col-span-5 bg-[#11141b] rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
+                <div class="p-4 bg-slate-800/20 border-b border-slate-800 flex justify-between items-center">
+                    <h2 id="leagueTitle" class="font-bold text-slate-300 uppercase text-xs tracking-widest italic">Liqa Yüklənir...</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left min-w-[300px]">
+                        <thead class="text-[10px] text-slate-500 uppercase bg-black/20">
+                            <tr>
+                                <th class="p-3 text-center">№</th>
+                                <th class="p-3">Klub</th>
+                                <th class="p-3 text-center">O</th>
+                                <th class="p-3 text-center">X</th>
+                            </tr>
+                        </thead>
+                        <tbody id="league-body" class="text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="squad-section" class="lg:col-span-7 sticky-side flex flex-col">
+                <div class="bg-[#11141b] rounded-2xl border border-slate-800 shadow-2xl p-5 h-full flex flex-col">
+                    <div class="flex items-center justify-between mb-5 border-b border-slate-800 pb-4">
+                        <div class="flex items-center gap-3">
+                            <div id="teamLogoPlace" class="w-10 h-10 bg-slate-800 rounded-lg flex items-center justify-center border border-slate-700">
+                                ⚽
+                            </div>
+                            <h2 id="squadTitle" class="font-bold text-lg text-white">Heyət</h2>
+                        </div>
+                        <span id="playerCount" class="text-[9px] bg-blue-500/10 text-blue-500 px-3 py-1 rounded-full font-bold uppercase">0 Oyunçu</span>
+                    </div>
+                    
+                    <div id="player-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto custom-scroll flex-1 max-h-[500px] lg:max-h-full">
+                        <div class="col-span-full py-10 text-center text-slate-600 italic text-sm">
+                            Klub seçərək heyəti bura gətirin.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API = 'https://liqa-haqqinda.onrender.com';
+
+        async function loadLeague() {
+            const slug = document.getElementById('leagueSelect').value;
+            const body = document.getElementById('league-body');
+            body.innerHTML = '<tr><td colspan="4" class="p-10 text-center animate-pulse text-slate-600">Yüklənir...</td></tr>';
+
+            try {
+                const res = await fetch(`${API}/league/${slug}`);
+                const data = await res.json();
+                document.getElementById('leagueTitle').innerText = data.leagueName;
+                
+                const rows = data.standings.find(s => s.type === 'total').rows;
+                
+                body.innerHTML = rows.map(item => `
+                    <tr class="team-row hover:bg-blue-600/5 cursor-pointer border-b border-slate-800/50 transition active:bg-blue-600/10" 
+                        onclick="loadSquad(${item.team.id}, '${item.team.name.replace(/'/g, "\\'")}')">
+                        <td class="p-4 text-center font-mono text-slate-500 text-xs">${item.position}</td>
+                        <td class="p-4 flex items-center gap-3">
+                            <img src="https://www.sofascore.com/api/v1/team/${item.team.id}/image" class="w-7 h-7 object-contain">
+                            <span class="font-semibold text-slate-200 text-xs sm:text-sm">${item.team.name}</span>
+                        </td>
+                        <td class="p-4 text-center text-slate-400 text-xs">${item.matches}</td>
+                        <td class="p-4 text-center font-black text-blue-500 text-sm">${item.points}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                body.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500">Xəta: Server bağlıdır!</td></tr>';
+            }
+        }
+
+        async function loadSquad(teamId, teamName) {
+            const grid = document.getElementById('player-grid');
+            const logoPlace = document.getElementById('teamLogoPlace');
+            const squadSection = document.getElementById('squad-section');
+            
+            document.getElementById('squadTitle').innerText = teamName;
+            logoPlace.innerHTML = `<img src="https://www.sofascore.com/api/v1/team/${teamId}/image" class="w-8 h-8 object-contain">`;
+            
+            grid.innerHTML = '<div class="col-span-full py-10 text-center text-blue-500 animate-spin text-xl">●</div>';
+
+            // Mobil cihazdırsa aşağıya sürüşdür
+            if (window.innerWidth < 1024) {
+                squadSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            try {
+                const res = await fetch(`${API}/team/${teamId}/players`);
+                const data = await res.json();
+                document.getElementById('playerCount').innerText = `${data.players.length} Oyunçu`;
+                
+                grid.innerHTML = data.players.map(p => {
+                    const player = p.player;
+                    return `
+                        <div class="player-card rounded-xl p-3 flex items-center gap-3 shadow-sm border border-slate-800">
+                            <img src="https://www.sofascore.com/api/v1/player/${player.id}/image" onerror="this.src='https://www.sofascore.com/static/images/placeholders/player.png'" class="w-10 h-10 rounded-lg object-cover bg-slate-800">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-[11px] text-slate-100 truncate">${player.name}</h4>
+                                <p class="text-[9px] text-blue-500 font-bold uppercase">${player.position}</p>
+                            </div>
+                            <div class="text-blue-500 font-mono font-bold text-[10px] bg-blue-500/10 px-2 py-1 rounded">
+                                #${player.jerseyNumber || '?'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                grid.innerHTML = '<p class="col-span-full text-center text-red-400">Heyət tapılmadı.</p>';
+            }
+        }
+
+        window.onload = loadLeague;
+    </script>
+</body>
+</html>
