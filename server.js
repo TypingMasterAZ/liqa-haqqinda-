@@ -44,8 +44,12 @@ app.get('/api/team/:id/players', async (req, res) => {
     }
 });
 
-// DOĞRU HİSSƏ: Portu Render təyin edir
+app.listen(3000, () => console.log(`Server: http://localhost:3000`));
+// Əvvəlki kodun davamı...
+
+// Portu Render-in verdiyi dəyişəndən götürürük
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
     console.log(`Server ${PORT} portunda aktivdir`);
 });
